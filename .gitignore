@@ -34,3 +34,6 @@
 #编译
 build/
 CMakeLists.txt
+
+#vscode
+.vscode/
