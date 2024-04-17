@@ -5,8 +5,9 @@ namespace Yesane {
         if (x <= maxR){
             real = x;
         }else {
-            ullTofnt(x, real, exp);
+            remainAccur = remainAccur && ullTofnt(x, real, exp);
         }
+        resultCode = !remainAccur;
     }
     fnt::fnt(long long x)
     {
@@ -18,8 +19,9 @@ namespace Yesane {
         if (x <= maxR) {
             real = x;
         }else{
-            ullTofnt(x, real, exp);
+            remainAccur = remainAccur && ullTofnt(x, real, exp);
         }
+        resultCode = !remainAccur;
     }
     fnt &fnt::operator=(const fnt &v)
     {
@@ -65,7 +67,7 @@ namespace Yesane {
         //适用于1111100000 即以1开头 以连续个0结尾的real值
         bitvec = bits(real);
         if(bitvec[realLength-1]){ //real的高位存放在比特数组的高位
-            while(exp < maxE-1 && !bitvec[0]){ //右移时确保不把1去掉 这样没有精度损失
+            while(exp < maxE-1 && !bitvec[0]){ //右移时确保不把1去掉 这样不会损失精度
                 real >>= 1;
                 bitvec >>= 1;
                 ++exp;
@@ -101,6 +103,8 @@ namespace Yesane {
         }
     }
     fnt& fnt::operator+=(const fnt& v) {
+        remainAccur = true;
+        resultCode = 0;
         // 检查是否含NaN
         if (exp == maxE || v.exp == maxE) {
             exp = maxE;
@@ -121,10 +125,10 @@ namespace Yesane {
         if (exp != v.exp) {  // 两者指数不同 先尽量降低大的指数 再强制提升小的指数
             if (exp > t.exp) {
                 if (!normalize(t.exp))  // exp降低后仍不满足两者相等
-                    t.normalize(exp, true);
+                    remainAccur = remainAccur && t.normalize(exp, true);
             } else if (exp < t.exp) {
                 if (!t.normalize(exp))  // t.exp降低后仍不满足两者相等
-                    normalize(t.exp, true);
+                    remainAccur = remainAccur && normalize(t.exp, true);
             }
         }
         // 此时应有exp==t.exp
@@ -148,12 +152,14 @@ namespace Yesane {
                     return *this;
                 }
                 unsigned char e;
-                ullTofnt(r, real, e);  // 此处已设置好了real值
+                remainAccur = remainAccur && ullTofnt(r, real, e);  // 此处已设置好了real值
                 int ee = e + exp;      // 最终的指数值
                 if (ee < maxE) {  // 没有溢出 但有效数字不够 可能为近似结果
+                    resultCode = !remainAccur;
                     exp = ee;
                     return *this;
                 } else {  // 运算结果溢出
+                    resultCode = 2;
                     exp = maxE;
                     real = 0;
                     return *this;
@@ -161,6 +167,7 @@ namespace Yesane {
             }
         } else {  // 运算出现了异常
             exp = maxE;
+            resultCode = 2;
             return *this;
         }
     }
@@ -170,6 +177,8 @@ namespace Yesane {
         return *this += t;
     }
     fnt& fnt::operator*=(const fnt &v){
+        remainAccur = true;
+        resultCode = 0;
         // 检查是否含NaN
         if (exp == maxE || v.exp == maxE){
             exp = maxE;
@@ -195,28 +204,34 @@ namespace Yesane {
         if(e>=maxE){ //运算溢出
             exp = maxE;
             real = 0;
+            resultCode = 2;
             return *this;
         }else {
             if(r<=maxR){ //有效数字足够 没有精度损失
                 exp = e;
                 real = r;
+                resultCode = 0;
                 return *this;
             }
             //将r转为real和指数值ee
             unsigned char ee;
-            ullTofnt(r, real, ee);
+            remainAccur = remainAccur && ullTofnt(r, real, ee);
             e += ee; //最终的指数值
             if(e >= maxE){ //运算依然溢出
                 exp = maxE;
                 real = 0;
+                resultCode = 2;
                 return *this;
             }else { //没有溢出 但有效数字不够 可能为近似结果
                 exp = e;
+                resultCode = !remainAccur;
                 return *this;
             }
         }
     }
     fnt& fnt::operator/=(const fnt &v){
+        remainAccur = true;
+        resultCode = 0;
         // 检查是否含NaN 或 除数为0
         if (exp == maxE || v.exp == maxE || v.real == 0) {
             exp = maxE;
@@ -261,14 +276,16 @@ namespace Yesane {
                 lr <<= c; //两者的指数此时相等了
                 exp = 0;
                 lr /= v.real;
-                ullTofnt(lr, real, exp); //可能有精度损失
+                remainAccur = remainAccur && ullTofnt(lr, real, exp); //可能有精度损失
+                resultCode = !remainAccur;
                 return *this;
             }else { //直接提升real值到64位且最左端为1
                 lr <<= 32;
                 exp -= (unsigned char)32 + v.exp;
                 lr /= v.real;
                 unsigned char a;
-                ullTofnt(lr, real, a); //可能有精度损失
+                remainAccur = remainAccur && ullTofnt(lr, real, a); //可能有精度损失
+                resultCode = !remainAccur;
                 exp += a; //不会有溢出
                 return *this;
             }

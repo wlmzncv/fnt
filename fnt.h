@@ -45,6 +45,13 @@ public:
     static const int realLength = 32; //real所占的bit数
     static const int maxE = 255; //exp的最大值 不可用
     static const long long maxR = 4294967295; //real的最大值 可用
+    /*
+    记录上一步操作结果
+    0-无精度损失
+    1-有精度损失
+    2-产生了NaN
+    */
+    std::uint32_t resultCode = 0;
 
     fnt(){}
     fnt(const fnt& v):sign(v.sign),exp(v.exp),real(v.real){}
@@ -95,6 +102,8 @@ public:
     // compulsory为true时会强制增加exp到指定值(但有可能导致real变为0
     // 或至少可能会损失精度) 若z的值比exp小 compulsory不应起作用
     bool normalize(int z, bool compulsory = false);
+    // 在有可能损失精度的操作后记录是否真的损失了精度
+    bool remainAccur = true;
 };
 
 #endif
