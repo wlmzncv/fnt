@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+#编译
+build/
+CMakeLists.txt
