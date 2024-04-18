@@ -1,9 +1,26 @@
 #include "fnt.h"
 #include <iostream>
 #include <string>
-
 using std::cout,std::string,std::endl;
 using Yesane::fnt;
+
+static int test_1(int a){
+    // if(a==1){
+    //     return -a;
+    // }else if(a==2){
+    //     return a;
+    // }
+    //a;
+}
+
+unsigned long long test_2(int a) {
+  // if(a==1){
+  //     return -a;
+  // }else if(a==2){
+  //     return a;
+  // }
+  //a;
+}
 
 int main(){
     fnt a(false,32,7688); //7688*(2^32)=33,019,708,571,648 33万零197亿零857万1648
@@ -44,4 +61,6 @@ int main(){
     if(f == 2*b){
         cout << "f==2b"<<endl;
     }
+
+    cout << "test_1 "<< test_1(-2)<<"\ntest_2 "<<int(test_2(3))<<endl;
 }
